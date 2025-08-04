@@ -65,6 +65,11 @@ _start:
 	mov esp, stack_top
 	;; Initialise processor state here
 
+
+	;; EBX has the multiboot information
+	extern multiboot_info
+	mov [multiboot_info], ebx
+	
 	extern kernel_main
 	call kernel_main
 

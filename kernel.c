@@ -12,35 +12,48 @@
 #error "This tutorial needs to be compiled with a ix86-elf compiler"
 #endif
 
-/* Hardware text mode color constants. */
-enum vga_color {
-	VGA_COLOR_BLACK = 0,
-	VGA_COLOR_BLUE = 1,
-	VGA_COLOR_GREEN = 2,
-	VGA_COLOR_CYAN = 3,
-	VGA_COLOR_RED = 4,
-	VGA_COLOR_MAGENTA = 5,
-	VGA_COLOR_BROWN = 6,
-	VGA_COLOR_LIGHT_GREY = 7,
-	VGA_COLOR_DARK_GREY = 8,
-	VGA_COLOR_LIGHT_BLUE = 9,
-	VGA_COLOR_LIGHT_GREEN = 10,
-	VGA_COLOR_LIGHT_CYAN = 11,
-	VGA_COLOR_LIGHT_RED = 12,
-	VGA_COLOR_LIGHT_MAGENTA = 13,
-	VGA_COLOR_LIGHT_BROWN = 14,
-	VGA_COLOR_WHITE = 15,
-};
+typedef struct Multiboot_Information {
+  uint32_t total_size;
+  uint32_t reserved;
+} mb_info;
 
-static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg) 
-{
-	return fg | bg << 4;
-}
+typedef struct Colour {
+  uint8_t red;
+  uint8_t green;
+  uint8_t blue;
+} colour;
 
-static inline uint16_t vga_entry(unsigned char uc, uint8_t color) 
-{
-	return (uint16_t) uc | (uint16_t) color << 8;
-}
+typedef struct Multiboot_Framebuffer_ColourPalette {
+  uint16_t amount;
+  colour palette[0];
+} mb_fb_colour_palette;
+
+typedef struct Multiboot_Framebuffer_DirectRGB {
+  uint8_t red_pos;
+  uint8_t red_mask;
+  uint8_t green_pos;
+  uint8_t green_mask;
+  uint8_t blue_pos;
+  uint8_t blue_mask;
+} mb_fb_dRGB;
+
+typedef struct Multiboot_Framebuffer {
+  uint32_t tag_type;
+  uint32_t size;
+  uint64_t address;
+  uint32_t pitch;
+  uint32_t width;
+  uint32_t height;
+  uint8_t bits_per_pixel;
+  uint8_t type;
+  uint8_t reserved;
+  union {
+	mb_fb_colour_palette palette;
+	mb_fb_dRGB dRGB;
+  };
+} mb_framebuffer;
+
+
 
 size_t strlen(const char* str) 
 {
@@ -49,72 +62,37 @@ size_t strlen(const char* str)
 		len++;
 	return len;
 }
+mb_info* multiboot_info;
 
-#define VGA_WIDTH   80
-#define VGA_HEIGHT  25
-#define VGA_MEMORY  0xB8000 
+#define MB_FB_INFO_TYPE 8
 
-size_t terminal_row;
-size_t terminal_column;
-uint8_t terminal_color;
-uint16_t* terminal_buffer = (uint16_t*)VGA_MEMORY;
+uint32_t nearest_multiple(uint32_t to_round, uint32_t multiple) {
+  return to_round + (multiple - (to_round % multiple)) % multiple;
+}
 
-void terminal_initialize(void) 
-{
-	terminal_row = 0;
-	terminal_column = 0;
-	terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
-	
-	for (size_t y = 0; y < VGA_HEIGHT; y++) {
-		for (size_t x = 0; x < VGA_WIDTH; x++) {
-			const size_t index = y * VGA_WIDTH + x;
-			terminal_buffer[index] = vga_entry(' ', terminal_color);
-		}
+mb_framebuffer* find_framebuffer() {
+  uint32_t* tag_start = multiboot_info+8;
+  while (*tag_start) {
+	uint32_t tag_size = *(tag_start + 1);
+	if (*tag_start == MB_FB_INFO_TYPE) {
+	  return (mb_framebuffer*)tag_start;
+	} else {
+	  tag_start += nearest_multiple(tag_size, 8) / sizeof(uint32_t);
 	}
-}
-
-void terminal_setcolor(uint8_t color) 
-{
-	terminal_color = color;
-}
-
-void terminal_putentryat(char c, uint8_t color, size_t x, size_t y) 
-{
-	const size_t index = y * VGA_WIDTH + x;
-	terminal_buffer[index] = vga_entry(c, color);
-}
-
-void terminal_putchar(char c) 
-{
-  if (c == '\n') {
-	terminal_column = 0;
-	terminal_row++;
-	return;
   }
-	terminal_putentryat(c, terminal_color, terminal_column, terminal_row);
-	if (++terminal_column == VGA_WIDTH) {
-		terminal_column = 0;
-		if (++terminal_row == VGA_HEIGHT)
-			terminal_row = 0;
-	}
 }
 
-void terminal_write(const char* data, size_t size) 
-{
-	for (size_t i = 0; i < size; i++)
-		terminal_putchar(data[i]);
-}
+void kernel_main(void) {
+  mb_framebuffer* fb = find_framebuffer();
+  uint32_t* fb_addr = (uint32_t*)fb->address;
+  uint32_t colour = ((1 << fb->dRGB.green_mask) - 1) << fb->dRGB.green_pos;
+  for (uint32_t i = 0; i < fb->width && i < fb->height; i++) {
+	uint32_t* pixel = fb_addr + fb->pitch * i + 4 * i;
+	*pixel = colour;
+  }
 
-void terminal_writestring(const char* data) 
-{
-	terminal_write(data, strlen(data));
-}
-
-void kernel_main(void) 
-{
-	/* Initialize terminal interface */
-	terminal_initialize();
-
+	
+	
 	/* Newline support is left as an exercise. */
-	terminal_writestring("Hello, kernel World!\n");
+  //	terminal_writestring("Hello, kernel World!\n");
 }
