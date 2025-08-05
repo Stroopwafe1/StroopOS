@@ -62,16 +62,14 @@ typedef struct Multiboot_Framebuffer {
 mb_info* multiboot_info;
 mb_framebuffer* mb_fb;
 
-void DrawPixel(uint32_t x, uint32_t y) {
+void DrawPixel(uint32_t x, uint32_t y, uint32_t colour) {
   uint32_t* fb_addr = (uint32_t*)mb_fb->address;
-  uint32_t colour = ((1 << mb_fb->dRGB.green_mask) - 1) << mb_fb->dRGB.green_pos;
-  colour |= ((1 << mb_fb->dRGB.red_mask) - 1) << mb_fb->dRGB.red_pos;
   
-  uint32_t* pixel = fb_addr + mb_fb->pitch * y + 4 * x;
+  uint32_t* pixel = fb_addr + mb_fb->pitch / 4 * y + x;
   *pixel = colour;
 };
 
-void DrawChar(char c, uint8_t x, uint8_t y) {
+void DrawChar(char c, uint32_t x, uint32_t y, uint32_t colour) {
     if (c < ' ')
         c = 0;
     else 
@@ -83,15 +81,15 @@ void DrawChar(char c, uint8_t x, uint8_t y) {
     for (uint32_t j = 0; j < CHAR_WIDTH; j++) {
         for (uint32_t i = 0; i < CHAR_HEIGHT; i++) {
             if (chr[j] & (1<<i)) {
-                DrawPixel(x+j, y+i);
+			  DrawPixel(x+j, y+i, colour);
             }
         }
     }
 }
 
-void DrawString(const char* str, uint8_t x, uint8_t y) {
+void DrawString(const char* str, uint32_t x, uint32_t y, uint32_t colour) {
     while (*str) {
-        DrawChar(*str++, x, y);
+	  DrawChar(*str++, x, y, colour);
         x += CHAR_WIDTH;
     }
 }
@@ -131,9 +129,8 @@ void kernel_main(void) {
 	  //DrawPixel(x, y);
 	}
   }
-  DrawString("Hello from kernel", 0, 0);
+  uint32_t colour = ((1 << mb_fb->dRGB.green_mask) - 1) << mb_fb->dRGB.green_pos;
+  colour |= ((1 << mb_fb->dRGB.red_mask) - 1) << mb_fb->dRGB.red_pos;
   
-	
-	/* Newline support is left as an exercise. */
-  //	terminal_writestring("Hello, kernel World!\n");
+  DrawString("Hello from kernel", 0, 0, colour);
 }
