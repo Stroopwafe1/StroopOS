@@ -87,11 +87,6 @@ mb_framebuffer* find_framebuffer() {
 
 void kernel_main(void) {
   mb_fb = find_framebuffer();
-  for (uint32_t y = 0; y < mb_fb->height; y++) {
-	for (uint32_t x = 0; x < mb_fb->width; x++) {
-	  //DrawPixel(x, y);
-	}
-  }
   ARGB yellow = { 0x00FFFF00 };
   ARGB purple = { 0x00FF00FF };
   

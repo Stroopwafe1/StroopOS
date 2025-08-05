@@ -17,6 +17,13 @@ MB_TAG_TERM_TYPE equ 0
 MB_TAG_TERM_SIZE equ 8
 	
 MB_TAG_OPTIONAL equ 0
+
+;; (base, limit, access, flags)
+%macro SegmentDescriptor 4
+	dd ((%1 & 0xFFFF) | (%2 & 0xFFFF))
+	dd ((%1 & 0xFF000000) | (%4 << 25) | (%2 & 0x070000) | (%3 << 1) | ((%1 & 0x00FF0000) >> 4))
+%endmacro
+	
 ; Declare a multiboot header that marks the program as a kernel. These are magic
 ; values that are documented in the multiboot standard. The bootloader will
 ; search for this signature in the first 8 KiB of the kernel file, aligned at a
@@ -50,7 +57,7 @@ align 8
 	dw MB_TAG_TERM_TYPE
 	dw MB_TAG_OPTIONAL
 	dw MB_TAG_TERM_SIZE
-mb_header_end:	
+mb_header_end:
 
 section .bss
 	align 16
@@ -58,14 +65,41 @@ stack_bottom:
 	resb 16384 					; Reserve 16 KiB for the stack
 stack_top:	
 
-section .text
-global _start:function (_start.end - _start)
+section .gdt
+align 8	
+gdt_begin:	
+	;;  NULL Descriptor
+	dd 0
+	dd 0
+	
+	;; Kernel mode code segment
+	SegmentDescriptor 0, 0xFFFFF, 0x9A, 0xC
+	
+	;; Kernel mode data segment
+	SegmentDescriptor 0, 0xFFFFF, 0x92, 0xC
 
+	;; User Mode code segment
+	SegmentDescriptor 0, 0xFFFFF, 0xFA, 0xC
+
+	;; User Mode Data segment
+	SegmentDescriptor 0, 0xFFFFF, 0xF2, 0xC
+gdt_end:
+gdt_desc:
+	dw gdt_end - gdt_begin
+	dd gdt_begin
+
+	
+section .text
+
+global _start:function (_start.end - _start)
 _start:
 	mov esp, stack_top
 	;; Initialise processor state here
 
-
+	cli
+	lgdt [gdt_begin]
+	call reload_segments
+	
 	;; EBX has the multiboot information
 	extern multiboot_info
 	mov [multiboot_info], ebx
@@ -78,3 +112,14 @@ _start:
 	hlt
 	jmp .hang
 .end:
+
+reload_segments:
+	jmp 0x08:.reload_CS
+.reload_CS:
+	mov ax, 0x10
+	mov ds, ax
+	mov es, ax
+	mov fs, ax
+	mov gs, ax
+	mov ss, ax
+	ret
