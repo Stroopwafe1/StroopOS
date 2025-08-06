@@ -76,5 +76,11 @@ typedef struct {
     uint32_t width;         /* width in pixels */
 } PSF_font;
 
+typedef struct {
+  uint32_t GS, FS, ES, DS;
+  uint32_t EDI, ESI, EBP, ESP, EBX, EDX, ECX, EAX;
+  uint32_t intr_index, err_code;
+  uint32_t EIP, CS, EFLAGS, USERESP, SS;
+} Reg_State;
 
 #endif

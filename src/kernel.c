@@ -5,6 +5,8 @@
 #include "structs.h"
 #include "psf_render.h"
 #include "font.h"
+#include "idt.h"
+#include "isrs.h"
 
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -48,15 +50,15 @@ void DrawChar(char c, uint32_t x, uint32_t y, uint32_t colour) {
     }
 }
 
-void DrawString(const char* str, uint32_t* x, uint32_t* y, ARGB colour) {
+void DrawString(const char* str, uint32_t* x, uint32_t* y, ARGB colour, bool new_line) {
     while (*str) {
 	  putchar(*str++, x, y, colour, (ARGB){ 0 });
 	  //DrawChar(*str++, *x, *y, colour);
 	  //*x += CHAR_WIDTH;
     }
+	if (new_line)
+	  putchar('\n', x, y, colour, (ARGB){0});
 }
-
-
 
 size_t strlen(const char* str) 
 {
@@ -85,14 +87,32 @@ mb_framebuffer* find_framebuffer() {
   return NULL;
 }
 
+uint32_t term_x = 0;
+uint32_t term_y = 0;
+
+void _fault_handler(Reg_State* r) {
+  ARGB red = {0xFFFF0000};
+  if (r->intr_index < 32) {
+	DrawString("[ERROR] [Kernel]:", &term_x, &term_y, red, false);
+	if (r->intr_index > EXCEPTION_MESSAGES_LENGTH) {
+	  DrawString(" Unknown exception ", &term_x, &term_y, red, true);
+	} else {
+	  DrawString(exception_messages[r->intr_index], &term_x, &term_y, red, true);
+	}
+	while (true) {} // crude 'halt'
+  }
+};
+
 void kernel_main(void) {
   mb_fb = find_framebuffer();
-  ARGB yellow = { 0x00FFFF00 };
-  ARGB purple = { 0x00FF00FF };
+
+  idt_install();
+  isrs_install();
+
+  ARGB yellow = { 0xFFFFFF00 };
+  ARGB purple = { 0xFFFF00FF };
   
-  uint32_t x = 0;
-  uint32_t y = 0;
-  
-  DrawString("Hello from kernel\n", &x, &y, yellow);
-  DrawString("From another line as well", &x, &y, purple);
+  DrawString("Hello from kernel", &term_x, &term_y, yellow, true);
+  DrawString("From another line as well", &term_x, &term_y, purple, true);
+
 }

@@ -3,6 +3,8 @@ BUILDDIR=build
 OBJS = \
 $(BUILDDIR)/kernel.o \
 $(BUILDDIR)/boot.o \
+$(BUILDDIR)/idt.o \
+$(BUILDDIR)/isrs.o \
 $(BUILDDIR)/psf_render.o \
 $(BUILDDIR)/Lat2-Terminus16.o
 

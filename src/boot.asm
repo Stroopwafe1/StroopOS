@@ -63,13 +63,9 @@ section .bss
 	align 16
 stack_bottom:
 	resb 16384 					; Reserve 16 KiB for the stack
-stack_top:	
-
-section .gdt
-
+stack_top:
 	
 section .text
-
 global _start:function (_start.end - _start)
 _start:
 	mov esp, stack_top
@@ -123,3 +119,11 @@ reload_CS:
 	mov gs, ax
 	mov ss, ax
 	ret
+
+global _idt_load
+extern _idtp
+_idt_load:
+	lidt [_idtp]
+	ret
+
+%include "ISR.inc.asm"
