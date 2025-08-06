@@ -26,12 +26,12 @@ build/StroopOS.bin: $(OBJS) src/linker.ld
 	i686-elf-gcc -T src/linker.ld -o build/StroopOS.bin -ffreestanding -ggdb -nostdlib $(OBJS) -lgcc
 
 build/boot.o: src/boot.asm
-	yasm -gdwarf2 -felf32 src/boot.asm -o build/boot.o
+	nasm -isrc/ -g -felf32 src/boot.asm -o build/boot.o
 
 build/Lat2-Terminus16.o: Lat2-Terminus16.psfu
 	objcopy -O elf32-i386 -B i386 -I binary Lat2-Terminus16.psfu build/Lat2-Terminus16.o
 
-build/%.o: src/%.c
+build/%.o: src/%.c src/*.h
 	i686-elf-gcc $(CFLAGS) $< -o $@ 
 
 StroopOS.iso: src/grub.cfg build/StroopOS.bin

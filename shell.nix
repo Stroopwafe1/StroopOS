@@ -7,6 +7,7 @@ pkgs.mkShell {
       pkgsCross.i686-embedded.buildPackages.gcc
       pkgsCross.i686-embedded.buildPackages.grub2
       libisoburn
+      nasm
     ];
   
 }
