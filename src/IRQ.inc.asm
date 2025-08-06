@@ -3,7 +3,7 @@ global _irq%1
 _irq%1:
 	cli
 	push byte 0
-	push byte %1
+	push byte %1 + 32
 	jmp irq_common
 %endmacro
 

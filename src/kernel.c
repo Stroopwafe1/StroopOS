@@ -3,11 +3,11 @@
 #include <stdint.h>
 
 #include "structs.h"
-#include "psf_render.h"
-#include "font.h"
+#include "tty.h"
 #include "idt.h"
 #include "isrs.h"
 #include "irq.h"
+#include "timer.h"
 
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -20,46 +20,11 @@
 #endif
 
 
-#define CHAR_WIDTH 6
-#define CHAR_HEIGHT 8
 
 mb_info* multiboot_info;
 mb_framebuffer* mb_fb;
 
-void DrawPixel(uint32_t x, uint32_t y, uint32_t colour) {
-  uint32_t* fb_addr = (uint32_t*)(mb_fb->address);
-  
-  uint32_t* pixel = fb_addr + mb_fb->pitch / 4 * y + x;
-  *pixel = colour;
-};
 
-void DrawChar(char c, uint32_t x, uint32_t y, uint32_t colour) {
-    if (c < ' ')
-        c = 0;
-    else 
-        c -= ' ';
-	
-    const unsigned char* chr = font[c];
-
-    // Draw pixels
-    for (uint32_t j = 0; j < CHAR_WIDTH; j++) {
-        for (uint32_t i = 0; i < CHAR_HEIGHT; i++) {
-            if (chr[j] & (1<<i)) {
-			  DrawPixel(x + j, y + i, colour);
-            }
-        }
-    }
-}
-
-void DrawString(const char* str, uint32_t* x, uint32_t* y, ARGB colour, bool new_line) {
-    while (*str) {
-	  putchar(*str++, x, y, colour, (ARGB){ 0 });
-	  //DrawChar(*str++, *x, *y, colour);
-	  //*x += CHAR_WIDTH;
-    }
-	if (new_line)
-	  putchar('\n', x, y, colour, (ARGB){0});
-}
 
 size_t strlen(const char* str) 
 {
@@ -88,9 +53,6 @@ mb_framebuffer* find_framebuffer() {
   return NULL;
 }
 
-uint32_t term_x = 0;
-uint32_t term_y = 0;
-
 void _fault_handler(Reg_State* r) {
   ARGB red = {0xFFFF0000};
   if (r->intr_index < 32) {
@@ -106,7 +68,8 @@ void _fault_handler(Reg_State* r) {
 
 void _irq_handler(Reg_State* r) {
   void (*handler)(Reg_State* r);
-
+  //putchar((r->intr_index - 32) + '0', &term_x, &term_y, (ARGB){0xFFFFFFFF}, (ARGB){0x0});
+  
   handler = irq_routines[r->intr_index - 32];
   if (handler)
 	handler(r);
@@ -117,6 +80,7 @@ void _irq_handler(Reg_State* r) {
   }
 
   _outb(0x20, 0x20); // Send EOI to master PIC
+  asm("sti");
 }
 
 void kernel_main(void) {
@@ -125,6 +89,7 @@ void kernel_main(void) {
   idt_install();
   isrs_install();
   irq_install();
+  timer_install();
 
   ARGB yellow = { 0xFFFFFF00 };
   ARGB purple = { 0xFFFF00FF };
@@ -132,4 +97,5 @@ void kernel_main(void) {
   DrawString("Hello from kernel", &term_x, &term_y, yellow, true);
   DrawString("From another line as well", &term_x, &term_y, purple, true);
 
+  for(;;) { asm("hlt"); }
 }

@@ -122,9 +122,9 @@ reload_CS:
 
 global _outb
 _outb:
-	mov dx, [esp+8]
-	mov ax, [esp+16]
-	out dx, ax
+	mov edx, [esp+4]
+	mov eax, [esp+8]
+	out dx, al
 	ret
 	
 global _idt_load
