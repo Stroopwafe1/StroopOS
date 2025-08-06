@@ -21,7 +21,7 @@ MB_TAG_OPTIONAL equ 0
 ;; (base, limit, access, flags)
 %macro SegmentDescriptor 4
 	dd ((%1 & 0xFFFF) | (%2 & 0xFFFF))
-	dd ((%1 & 0xFF000000) | (%4 << 25) | (%2 & 0x070000) | (%3 << 1) | ((%1 & 0x00FF0000) >> 4))
+	dd ((%1 & 0xFF000000) | (%4 << 20) | (%2 & 0x0F0000) | (%3 << 8) | ((%1 & 0x00FF0000) >> 16))
 %endmacro
 	
 ; Declare a multiboot header that marks the program as a kernel. These are magic
@@ -66,27 +66,6 @@ stack_bottom:
 stack_top:	
 
 section .gdt
-align 8	
-gdt_begin:	
-	;;  NULL Descriptor
-	dd 0
-	dd 0
-	
-	;; Kernel mode code segment
-	SegmentDescriptor 0, 0xFFFFF, 0x9A, 0xC
-	
-	;; Kernel mode data segment
-	SegmentDescriptor 0, 0xFFFFF, 0x92, 0xC
-
-	;; User Mode code segment
-	SegmentDescriptor 0, 0xFFFFF, 0xFA, 0xC
-
-	;; User Mode Data segment
-	SegmentDescriptor 0, 0xFFFFF, 0xF2, 0xC
-gdt_end:
-gdt_desc:
-	dw gdt_end - gdt_begin
-	dd gdt_begin
 
 	
 section .text
@@ -97,7 +76,7 @@ _start:
 	;; Initialise processor state here
 
 	cli
-	lgdt [gdt_begin]
+	lgdt [gdt_desc]
 	call reload_segments
 	
 	;; EBX has the multiboot information
@@ -113,9 +92,30 @@ _start:
 	jmp .hang
 .end:
 
+align 8	
+gdt_begin:	
+	;;  NULL Descriptor
+	dq 0
+	
+	;; Kernel mode code segment
+	SegmentDescriptor 0, 0xFFFFF, 0x9A, 0xC
+	
+	;; Kernel mode data segment
+	SegmentDescriptor 0, 0xFFFFF, 0x92, 0xC
+
+	;; User Mode code segment
+	SegmentDescriptor 0, 0xFFFFF, 0xFA, 0xC
+
+	;; User Mode Data segment
+	SegmentDescriptor 0, 0xFFFFF, 0xF2, 0xC
+gdt_end:
+gdt_desc:
+	dw gdt_end - gdt_begin - 1
+	dd gdt_begin
+
 reload_segments:
-	jmp 0x08:.reload_CS
-.reload_CS:
+	jmp 0x08:reload_CS
+reload_CS:
 	mov ax, 0x10
 	mov ds, ax
 	mov es, ax
