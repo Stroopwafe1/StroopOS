@@ -6,6 +6,11 @@
 uint32_t term_x = 0;
 uint32_t term_y = 0;
 
+void CaretMoveUp() { term_y--; }
+void CaretMoveDown() { term_y++; }
+void CaretMoveLeft() { term_x--; }
+void CaretMoveRight() { term_x++; }
+
 void DrawPixel(uint32_t x, uint32_t y, uint32_t colour) {
   uint32_t* fb_addr = (uint32_t*)(mb_fb->address);
   
@@ -42,7 +47,5 @@ void DrawString(const char* str, uint32_t* x, uint32_t* y, ARGB colour, bool new
 }
 
 void DrawCaret(ARGB colour) {
-  uint32_t x = term_x;
-  uint32_t y = term_y;
-  putchar('_', &x, &y, colour, (ARGB){0});
+  composechar('_', term_x, term_y, colour);
 }

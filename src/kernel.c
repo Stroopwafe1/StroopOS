@@ -98,6 +98,6 @@ void kernel_main(void) {
   
   DrawString("Hello from kernel", &term_x, &term_y, yellow, true);
   DrawString("From another line as well", &term_x, &term_y, purple, true);
-
+  
   for(;;) { asm("hlt"); }
 }

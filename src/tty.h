@@ -16,6 +16,10 @@ extern mb_framebuffer* mb_fb;
 #define CHAR_WIDTH 6
 #define CHAR_HEIGHT 8
 
+void CaretMoveUp();
+void CaretMoveDown();
+void CaretMoveLeft();
+void CaretMoveRight();
 
 void DrawPixel(uint32_t x, uint32_t y, uint32_t colour);
 void DrawChar(char c, uint32_t x, uint32_t y, uint32_t colour);
