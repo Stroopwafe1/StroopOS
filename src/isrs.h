@@ -37,6 +37,6 @@ extern void _isr31();
 void isrs_install();
 
 extern const char* exception_messages[];
-#define EXCEPTION_MESSAGES_LENGTH 21
+#define EXCEPTION_MESSAGES_LENGTH 22
 
 #endif

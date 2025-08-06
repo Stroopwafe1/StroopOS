@@ -120,6 +120,13 @@ reload_CS:
 	mov ss, ax
 	ret
 
+global _outb
+_outb:
+	mov dx, [esp+8]
+	mov ax, [esp+16]
+	out dx, ax
+	ret
+	
 global _idt_load
 extern _idtp
 _idt_load:
@@ -127,3 +134,4 @@ _idt_load:
 	ret
 
 %include "ISR.inc.asm"
+%include "IRQ.inc.asm"

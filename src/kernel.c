@@ -7,6 +7,7 @@
 #include "font.h"
 #include "idt.h"
 #include "isrs.h"
+#include "irq.h"
 
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -103,11 +104,27 @@ void _fault_handler(Reg_State* r) {
   }
 };
 
+void _irq_handler(Reg_State* r) {
+  void (*handler)(Reg_State* r);
+
+  handler = irq_routines[r->intr_index - 32];
+  if (handler)
+	handler(r);
+
+  if (r->intr_index >= 40) {
+	// This came from the slave PIC
+	_outb(0xA0, 0x20); // Send EOI
+  }
+
+  _outb(0x20, 0x20); // Send EOI to master PIC
+}
+
 void kernel_main(void) {
   mb_fb = find_framebuffer();
 
   idt_install();
   isrs_install();
+  irq_install();
 
   ARGB yellow = { 0xFFFFFF00 };
   ARGB purple = { 0xFFFF00FF };

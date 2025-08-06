@@ -5,6 +5,7 @@ $(BUILDDIR)/kernel.o \
 $(BUILDDIR)/boot.o \
 $(BUILDDIR)/idt.o \
 $(BUILDDIR)/isrs.o \
+$(BUILDDIR)/irq.o \
 $(BUILDDIR)/psf_render.o \
 $(BUILDDIR)/Lat2-Terminus16.o
 
@@ -27,7 +28,7 @@ test_iso: build/iso/StroopOS.iso
 build/StroopOS.bin: $(OBJS) src/linker.ld
 	i686-elf-gcc -T src/linker.ld -o build/StroopOS.bin -ffreestanding -ggdb -nostdlib $(OBJS) -lgcc
 
-build/boot.o: src/boot.asm
+build/boot.o: src/*.asm
 	nasm -isrc/ -g -felf32 src/boot.asm -o build/boot.o
 
 build/Lat2-Terminus16.o: Lat2-Terminus16.psfu
