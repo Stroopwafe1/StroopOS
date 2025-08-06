@@ -8,6 +8,7 @@
 #include "isrs.h"
 #include "irq.h"
 #include "timer.h"
+#include "keyboard.h"
 
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -90,6 +91,7 @@ void kernel_main(void) {
   isrs_install();
   irq_install();
   timer_install();
+  keyboard_install();
 
   ARGB yellow = { 0xFFFFFF00 };
   ARGB purple = { 0xFFFF00FF };

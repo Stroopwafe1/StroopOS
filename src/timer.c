@@ -9,7 +9,7 @@ void timer_handler(Reg_State* r) {
   
 
   if (ticks % 18 == 0) {
-	DrawString("One second has passed", &term_x, &term_y, (ARGB){0xFFFFFFFF}, true);
+	//DrawString("One second has passed", &term_x, &term_y, (ARGB){0xFFFFFFFF}, true);
   }
 }
 

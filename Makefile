@@ -8,6 +8,7 @@ $(BUILDDIR)/idt.o \
 $(BUILDDIR)/isrs.o \
 $(BUILDDIR)/irq.o \
 $(BUILDDIR)/timer.o \
+$(BUILDDIR)/keyboard.o \
 $(BUILDDIR)/psf_render.o \
 $(BUILDDIR)/Lat2-Terminus16.o
 

@@ -126,6 +126,12 @@ _outb:
 	mov eax, [esp+8]
 	out dx, al
 	ret
+
+global _inb
+_inb:
+	mov edx, [esp+4]
+	in eax, dx
+	ret
 	
 global _idt_load
 extern _idtp
