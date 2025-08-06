@@ -3,13 +3,16 @@
 #include "irq.h"
 
 uint32_t ticks = 0;
+bool caret_shown = true;
 
 void timer_handler(Reg_State* r) {
   ticks++;
   
-
-  if (ticks % 18 == 0) {
-	//DrawString("One second has passed", &term_x, &term_y, (ARGB){0xFFFFFFFF}, true);
+  // ticks % 18 is one second basically
+  if (ticks % 6 == 0) {
+	caret_shown = !caret_shown;
+	ARGB colour = caret_shown ? (ARGB){0xFFFFFFFF} : (ARGB){0x0};
+	DrawCaret(colour);
   }
 }
 

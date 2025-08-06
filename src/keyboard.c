@@ -54,6 +54,7 @@ void keyboard_handler(Reg_State* r) {
   if (scancode & 0x80) {
 	// modifiers
   } else {
+	DrawCaret((ARGB){0x0});
 	putchar(kbdus[scancode], &term_x, &term_y, (ARGB){0xFFFFFFFF}, (ARGB){0x0});
   }
 }

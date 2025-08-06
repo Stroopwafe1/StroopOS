@@ -20,6 +20,6 @@ extern mb_framebuffer* mb_fb;
 void DrawPixel(uint32_t x, uint32_t y, uint32_t colour);
 void DrawChar(char c, uint32_t x, uint32_t y, uint32_t colour);
 void DrawString(const char* str, uint32_t* x, uint32_t* y, ARGB colour, bool new_line);
-
+void DrawCaret(ARGB colour);
 
 #endif

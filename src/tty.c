@@ -40,3 +40,9 @@ void DrawString(const char* str, uint32_t* x, uint32_t* y, ARGB colour, bool new
 	if (new_line)
 	  putchar('\n', x, y, colour, (ARGB){0});
 }
+
+void DrawCaret(ARGB colour) {
+  uint32_t x = term_x;
+  uint32_t y = term_y;
+  putchar('_', &x, &y, colour, (ARGB){0});
+}
