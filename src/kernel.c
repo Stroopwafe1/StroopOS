@@ -9,6 +9,9 @@
 #include "irq.h"
 #include "timer.h"
 #include "keyboard.h"
+#include "kernel_functions.h"
+#include "tty.h"
+#include "game_pong.h"
 
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -72,6 +75,12 @@ void _irq_handler(Reg_State* r) {
   asm("sti");
 }
 
+kState current_state = TTY;
+void (*kKeyHandlers[2])(Key_Packet key, Reg_State* );
+void (*kInitFuncs[2])(void);
+void (*kUpdateFuncs[2])(uint32_t delta);
+uint32_t update_freqs[2] = { 0 };
+
 void kernel_main(void) {
   mb_fb = find_framebuffer();
 
@@ -81,11 +90,37 @@ void kernel_main(void) {
   timer_install();
   keyboard_install();
 
-  ARGB yellow = { 0xFFFFFF00 };
-  ARGB purple = { 0xFFFF00FF };
-  
-  DrawString("Hello from kernel", &term_x, &term_y, yellow, true);
-  DrawString("From another line as well", &term_x, &term_y, purple, true);
+  tty_register();
+  pong_register();
+
+  kChangeState(TTY);
   
   for(;;) { asm("hlt"); }
+}
+
+void kChangeState(kState state) {
+  current_state = state;
+  kInitFuncs[state]();
+}
+
+void kHandleKey(Key_Packet key, Reg_State* r) {
+  kKeyHandlers[(uint32_t)current_state](key, r);
+}
+
+void kSetHandler(kState state, void (*handler)(Key_Packet key, Reg_State* )) {
+  kKeyHandlers[(uint32_t)state] = handler;
+}
+
+void kSetInit(kState state, void (*init_func)(void)) {
+  kInitFuncs[(uint32_t)state] = init_func;
+}
+
+void kSetUpdate(kState state, uint32_t update_freq, void (*update_func)(uint32_t delta_ticks)) {
+  kUpdateFuncs[(uint32_t)state] = update_func;
+  update_freqs[state] = update_freq;
+}
+
+void kUpdate(uint32_t ticks) {
+  if (ticks % update_freqs[current_state] == 0)
+	kUpdateFuncs[current_state](update_freqs[current_state]);
 }

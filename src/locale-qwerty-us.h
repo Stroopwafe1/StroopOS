@@ -83,6 +83,7 @@
 #define KEY_F12 0x58
 #define KEY_MAX (KEY_F12 + 1)
 
+#ifdef KEY_MAPPING
 unsigned char mapL1[KEY_MAX] = {
   [KEY_ESCAPE] = 0,
   [KEY_1] = '1',
@@ -254,3 +255,4 @@ unsigned char mapL2[KEY_MAX] = {
   [KEY_F11] = 0,
   [KEY_F12] = 0
 };
+#endif

@@ -2,11 +2,15 @@
 
 #define FONT_H_DEFINITION
 #include "font.h"
+
+#define KEY_MAPPING
 #include "locale-qwerty-us.h"
 #include "str.h"
+#include "kernel_functions.h"
 
 uint32_t term_x = 0;
 uint32_t term_y = 0;
+bool caret_shown = true;
 
 typedef struct {
   ARGB colour;
@@ -14,6 +18,17 @@ typedef struct {
 } term_char;
 
 term_char screen[768][1024] = {0};
+
+void Update_TTY(uint32_t delta) {
+  	caret_shown = !caret_shown;
+	ARGB colour = caret_shown ? (ARGB){0xFFFFFFFF} : (ARGB){0x0};
+	DrawCaret(colour);
+}
+
+void Init_TTY(void) {
+  Clear_TTY();
+  PrintUsage();
+}
 
 void CaretMoveUp() {
   if (term_y == 0) return;
@@ -31,7 +46,7 @@ void CaretMoveRight() {
   term_x = (term_x + 1) % mb_fb->width;
 }
 
-void DrawPixel(uint32_t x, uint32_t y, uint32_t colour) {
+void DrawPixel_TTY(uint32_t x, uint32_t y, uint32_t colour) {
   uint32_t* fb_addr = (uint32_t*)(mb_fb->address);
   
   uint32_t* pixel = fb_addr + mb_fb->pitch / 4 * y + x;
@@ -50,7 +65,7 @@ void DrawChar(char c, uint32_t x, uint32_t y, uint32_t colour) {
     for (uint32_t j = 0; j < CHAR_WIDTH; j++) {
         for (uint32_t i = 0; i < CHAR_HEIGHT; i++) {
             if (chr[j] & (1<<i)) {
-			  DrawPixel(x + j, y + i, colour);
+			  DrawPixel_TTY(x + j, y + i, colour);
             }
         }
     }
@@ -79,7 +94,7 @@ void CleanBuffer() {
   buffer_size = 0;
 }
 
-void Clear() {
+void Clear_TTY() {
     memset((void*)mb_fb->address, sizeof(uint32_t) * mb_fb->height * mb_fb->width, 0);
 	CleanBuffer();
 	term_x = 0;
@@ -87,7 +102,7 @@ void Clear() {
 }
 
 void Redraw() {
-  Clear();
+  Clear_TTY();
   for (uint32_t y = 0; y < mb_fb->height; y++) {
 	for (uint32_t x = 0; x < mb_fb->width; x++) {
 	  uint32_t cy = y;
@@ -103,6 +118,7 @@ void PrintUsage() {
   PrintOutput("StroopOS - Help\n"
 			 "/echo <text> - Replies with the text supplied\n"
 			 "/clear - Clears the screen\n"
+			 "/pong - Play the classic arcade game Pong! (Press Escape to go back)\n"
 			 "/help - Prints this usage message", true);
 }
 
@@ -111,9 +127,11 @@ void ProcessBuffer() {
   if (strequals("/echo ", buffer, 6)) {
 	PrintOutput(str_buf + 6, true);
   } else if (strequals("/clear", buffer, buffer_size)) {
-	Clear();
+	Clear_TTY();
   } else if (strequals("/help", buffer, buffer_size) || buffer[0] == '?') {
 	PrintUsage();
+  } else if (strequals("/pong", buffer, buffer_size)) {
+	kChangeState(GAME_PONG);
   } else {
 	if (buffer[0] == '/') {
 	  PrintError("[Kernel TTY]: Unrecognised command ", false);
@@ -126,7 +144,7 @@ void ProcessBuffer() {
   CleanBuffer();
 }
 
-void HandleKey(Key_Packet key, Reg_State* r) {
+void HandleKey_TTY(Key_Packet key, Reg_State* r) {
   DrawCaret((ARGB){0x0});
   if (key.state == PRESSED) {
 	switch(key.scancode & 0xFF) {
@@ -175,3 +193,9 @@ void HandleKey(Key_Packet key, Reg_State* r) {
   }
 
 };
+
+void tty_register() {
+  kSetHandler(TTY, &HandleKey_TTY);
+  kSetInit(TTY, &Init_TTY);
+  kSetUpdate(TTY, 6, &Update_TTY);
+}

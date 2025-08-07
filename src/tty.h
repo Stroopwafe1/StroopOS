@@ -22,16 +22,22 @@ extern mb_framebuffer* mb_fb;
 #define PrintOutput(text, newline) Print_((text), (ARGB){0xFF00FF00}, (newline))
 #define PrintInput(text, newline) Print_((text), (ARGB){0xFFFFFFFF}, (newline))
 
+void tty_register();
+
 void CaretMoveUp();
 void CaretMoveDown();
 void CaretMoveLeft();
 void CaretMoveRight();
 
-void DrawPixel(uint32_t x, uint32_t y, uint32_t colour);
+void DrawPixel_TTY(uint32_t x, uint32_t y, uint32_t colour);
 void DrawChar(char c, uint32_t x, uint32_t y, uint32_t colour);
 void DrawString(const char* str, uint32_t* x, uint32_t* y, ARGB colour, bool new_line);
 void DrawCaret(ARGB colour);
 
-void HandleKey(Key_Packet key, Reg_State* r);
+void CleanBuffer();
+void Clear_TTY();
+void Redraw_TTY();
+void PrintUsage();
+void ProcessBuffer();
 
 #endif

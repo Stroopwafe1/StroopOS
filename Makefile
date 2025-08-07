@@ -11,6 +11,7 @@ $(BUILDDIR)/irq.o \
 $(BUILDDIR)/timer.o \
 $(BUILDDIR)/keyboard.o \
 $(BUILDDIR)/psf_render.o \
+$(BUILDDIR)/game_pong.o \
 $(BUILDDIR)/Lat2-Terminus16.o
 
 CFLAGS = -c -std=gnu99 -ffreestanding -ggdb -Wall -Wextra
