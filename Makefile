@@ -2,6 +2,7 @@ BUILDDIR=build
 
 OBJS = \
 $(BUILDDIR)/kernel.o \
+$(BUILDDIR)/str.o \
 $(BUILDDIR)/boot.o \
 $(BUILDDIR)/tty.o \
 $(BUILDDIR)/idt.o \
@@ -14,7 +15,7 @@ $(BUILDDIR)/Lat2-Terminus16.o
 
 CFLAGS = -c -std=gnu99 -ffreestanding -ggdb -Wall -Wextra
 
-QEMU_OPTIONS = -m 128 -usb -smp 1 -serial stdio -d cpu_reset -d int -d guest_errors
+QEMU_OPTIONS = -m 128 -usb -smp 1 -serial stdio -d cpu_reset,guest_errors,pcall
 
 .PHONY: all test test_iso debug
 

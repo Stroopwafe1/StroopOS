@@ -20,20 +20,8 @@
 #error "This tutorial needs to be compiled with a ix86-elf compiler"
 #endif
 
-
-
 mb_info* multiboot_info;
 mb_framebuffer* mb_fb;
-
-
-
-size_t strlen(const char* str) 
-{
-	size_t len = 0;
-	while (str[len])
-		len++;
-	return len;
-}
 
 #define MB_FB_INFO_TYPE 8
 
