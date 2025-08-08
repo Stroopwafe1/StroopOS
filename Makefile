@@ -21,10 +21,10 @@ QEMU_OPTIONS = -m 128 -usb -smp 1 -serial stdio -d cpu_reset,guest_errors,pcall
 
 .PHONY: all test test_iso debug clean
 
-all: $(OBJS) build/StroopOS.bin StroopOS.iso test_iso
+all: $(OBJS) build/ build/StroopOS.bin StroopOS.iso test_iso
 
-clean: build/
-	rm -rf build/
+clean: $(BUILDDIR)
+	rm -rf $(BUILDDIR)/*
 
 debug: build/iso/StroopOS.iso build/StroopOS.bin
 	qemu-system-i386 -cdrom build/iso/StroopOS.iso -s -S $(QEMU_OPTIONS) &
