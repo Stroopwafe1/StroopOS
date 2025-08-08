@@ -5,7 +5,8 @@
 uint32_t ticks = 0;
 
 
-void timer_handler(Reg_State* r) { 
+void timer_handler(Reg_State* r) {
+  (void)r; // Ununsed
   // ticks % 18 is one second basically
   kUpdate(ticks++);
 }

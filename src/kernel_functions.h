@@ -5,7 +5,8 @@
 
 typedef enum {
   TTY,
-  GAME_PONG
+  GAME_PONG,
+  KSTATE_COUNT
 } kState;
 
 void kChangeState(kState state);
@@ -13,6 +14,6 @@ void kHandleKey(Key_Packet key, Reg_State* r);
 void kUpdate(uint32_t delta);
 void kSetHandler(kState state, void (*handler)(Key_Packet key, Reg_State* ));
 void kSetInit(kState state, void (*init_func)(void));
-void kSetUpdate(kState state, uint32_t update_freq, void (*update_func)(uint32_t delta_ticks));
+void kSetUpdate(kState state, uint32_t update_freq, void (*update_func)(void));
 
 #endif

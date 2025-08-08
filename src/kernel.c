@@ -10,6 +10,7 @@
 #include "timer.h"
 #include "keyboard.h"
 #include "kernel_functions.h"
+#include "graphics.h"
 #include "tty.h"
 #include "game_pong.h"
 
@@ -46,13 +47,12 @@ mb_framebuffer* find_framebuffer() {
 }
 
 void _fault_handler(Reg_State* r) {
-  ARGB red = {0xFFFF0000};
   if (r->intr_index < 32) {
-	DrawString("[ERROR] [Kernel]:", &term_x, &term_y, red, false);
+	PrintError("[ERROR] [Kernel]: ", false);
 	if (r->intr_index > EXCEPTION_MESSAGES_LENGTH) {
-	  DrawString(" Unknown exception ", &term_x, &term_y, red, true);
+	  PrintError("Unknown Exception ", true);
 	} else {
-	  DrawString(exception_messages[r->intr_index], &term_x, &term_y, red, true);
+	  PrintError(exception_messages[r->intr_index], true);
 	}
 	while (true) {} // crude 'halt'
   }
@@ -76,10 +76,10 @@ void _irq_handler(Reg_State* r) {
 }
 
 kState current_state = TTY;
-void (*kKeyHandlers[2])(Key_Packet key, Reg_State* );
-void (*kInitFuncs[2])(void);
-void (*kUpdateFuncs[2])(uint32_t delta);
-uint32_t update_freqs[2] = { 0 };
+void (*kKeyHandlers[KSTATE_COUNT])(Key_Packet key, Reg_State* );
+void (*kInitFuncs[KSTATE_COUNT])(void);
+void (*kUpdateFuncs[KSTATE_COUNT])(void);
+uint32_t update_freqs[KSTATE_COUNT] = { 0 };
 
 void kernel_main(void) {
   mb_fb = find_framebuffer();
@@ -115,12 +115,12 @@ void kSetInit(kState state, void (*init_func)(void)) {
   kInitFuncs[(uint32_t)state] = init_func;
 }
 
-void kSetUpdate(kState state, uint32_t update_freq, void (*update_func)(uint32_t delta_ticks)) {
+void kSetUpdate(kState state, uint32_t update_freq, void (*update_func)(void)) {
   kUpdateFuncs[(uint32_t)state] = update_func;
   update_freqs[state] = update_freq;
 }
 
 void kUpdate(uint32_t ticks) {
   if (ticks % update_freqs[current_state] == 0)
-	kUpdateFuncs[current_state](update_freqs[current_state]);
+	kUpdateFuncs[current_state]();
 }

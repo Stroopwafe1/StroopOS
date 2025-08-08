@@ -4,6 +4,7 @@ OBJS = \
 $(BUILDDIR)/kernel.o \
 $(BUILDDIR)/str.o \
 $(BUILDDIR)/boot.o \
+$(BUILDDIR)/graphics.o \
 $(BUILDDIR)/tty.o \
 $(BUILDDIR)/idt.o \
 $(BUILDDIR)/isrs.o \
@@ -18,9 +19,12 @@ CFLAGS = -c -std=gnu99 -ffreestanding -ggdb -Wall -Wextra
 
 QEMU_OPTIONS = -m 128 -usb -smp 1 -serial stdio -d cpu_reset,guest_errors,pcall
 
-.PHONY: all test test_iso debug
+.PHONY: all test test_iso debug clean
 
 all: $(OBJS) build/StroopOS.bin StroopOS.iso test_iso
+
+clean: build/
+	rm -rf build/
 
 debug: build/iso/StroopOS.iso build/StroopOS.bin
 	qemu-system-i386 -cdrom build/iso/StroopOS.iso -s -S $(QEMU_OPTIONS) &
