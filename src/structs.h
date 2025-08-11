@@ -8,6 +8,21 @@ typedef struct Multiboot_Information {
   uint32_t reserved;
 } mb_info;
 
+typedef struct {
+  uint64_t base_address;
+  uint64_t length;
+  uint32_t type;
+  uint32_t reserved;
+} MB_MMapEntry;
+
+typedef struct {
+  uint32_t type;
+  uint32_t size;
+  uint32_t entry_size;
+  uint32_t entry_version;
+  MB_MMapEntry* entries;
+} MB_MMap;
+
 typedef struct MB_Colour {
   uint8_t red;
   uint8_t green;
@@ -82,5 +97,18 @@ typedef struct {
   uint32_t intr_index, err_code;
   uint32_t EIP, CS, EFLAGS, USERESP, SS;
 } Reg_State;
+
+
+typedef struct {
+  void* start;
+  uint16_t size;
+  uint16_t flags;
+  uint32_t used_sections_bitmap; // every bit stands for 128 bytes (if page is 4KiB)
+} PageDescriptorEntry;
+
+typedef struct {
+  uint32_t entry_count;
+  PageDescriptorEntry* first_entry;
+} KernelPageDescriptorTable;
 
 #endif

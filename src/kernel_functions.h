@@ -9,11 +9,14 @@ typedef enum {
   KSTATE_COUNT
 } kState;
 
+void kPanic(const char* err);
 void kChangeState(kState state);
 void kHandleKey(Key_Packet key, Reg_State* r);
 void kUpdate(uint32_t delta);
 void kSetHandler(kState state, void (*handler)(Key_Packet key, Reg_State* ));
 void kSetInit(kState state, void (*init_func)(void));
 void kSetUpdate(kState state, uint32_t update_freq, void (*update_func)(void));
+
+uint32_t _asm_bsr(void* value);
 
 #endif

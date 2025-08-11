@@ -25,24 +25,35 @@
 
 mb_info* multiboot_info;
 mb_framebuffer* mb_fb;
+MB_MMap* mb_mmap;
+MB_MMapEntry* mb_mmap_ram;
 
-#define MB_FB_INFO_TYPE 8
+#define MB_INFO_MMAP_TYPE 6
+#define MB_INFO_MMAP_RAM_TYPE 1
+#define MB_INFO_FB_TYPE 8
 
 uint32_t nearest_multiple(uint32_t to_round, uint32_t multiple) {
   return to_round + (multiple - (to_round % multiple)) % multiple;
 }
 
-mb_framebuffer* find_framebuffer() {
+void parse_multiboot_info() {
   uint32_t* tag_start = (uint32_t*)(void*)(multiboot_info+8);
   while (*tag_start) {
 	uint32_t tag_size = *(tag_start + 1);
-	if (*tag_start == MB_FB_INFO_TYPE) {
-	  return (mb_framebuffer*)tag_start;
-	} else {
-	  tag_start += nearest_multiple(tag_size, 8) / sizeof(uint32_t);
+	if (*tag_start == MB_INFO_FB_TYPE) {
+	  mb_fb = (mb_framebuffer*)tag_start;
+	} else if (*tag_start == MB_INFO_MMAP_TYPE) {
+	  mb_mmap = (MB_MMap*)tag_start;
+	  mb_mmap->entries = (MB_MMapEntry*)&mb_mmap->entries;
+	  for (uint32_t i = 0; i < mb_mmap->size / mb_mmap->entry_size; i++) {
+		if (mb_mmap->entries[i].type == MB_INFO_MMAP_RAM_TYPE) {
+		  mb_mmap_ram = &mb_mmap->entries[i];
+		}
+	  }
 	}
+	tag_start += nearest_multiple(tag_size, 8) / sizeof(uint32_t);
   }
-  return NULL;
+  return;
 }
 
 void _fault_handler(Reg_State* r) {
@@ -81,7 +92,7 @@ void (*kUpdateFuncs[KSTATE_COUNT])(void);
 uint32_t update_freqs[KSTATE_COUNT] = { 0 };
 
 void kernel_main(void) {
-  mb_fb = find_framebuffer();
+  parse_multiboot_info();
 
   idt_install();
   isrs_install();
@@ -95,6 +106,11 @@ void kernel_main(void) {
   kChangeState(TTY);
   
   for(;;) { asm("hlt"); }
+}
+
+void kPanic(const char* err) {
+  PrintError("[KERNEL PANIC]: ", false);
+  PrintError(err, true);
 }
 
 void kChangeState(kState state) {

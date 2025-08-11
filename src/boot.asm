@@ -67,10 +67,17 @@ stack_top:
 
 section .kpt nobits alloc write		; Kernel Page Table
 	align 16
-	resd 2
-							; Entry Count
-							; First Entry PTR
+global kpt_entry_count
+kpt_entry_count:
+	resd 1					; Entry Count
+global kpt_entry_ptr
+kpt_entry_ptr:				; First Entry PTR
+	resd 1
+global kpt_entries
+kpt_entries:
+	resb 16384 * 12
 
+	
 section .text
 global _start:function (_start.end - _start)
 _start:
@@ -138,7 +145,12 @@ _inb:
 	mov edx, [esp+4]
 	in eax, dx
 	ret
-	
+
+global _asm_bsr
+_asm_bsr:
+	bsr eax, [esp+4]
+	ret
+
 global _idt_load
 extern _idtp
 _idt_load:
