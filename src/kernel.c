@@ -3,7 +3,6 @@
 #include <stdint.h>
 
 #include "structs.h"
-#include "tty.h"
 #include "idt.h"
 #include "isrs.h"
 #include "irq.h"

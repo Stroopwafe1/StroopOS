@@ -64,7 +64,13 @@ section .bss
 stack_bottom:
 	resb 16384 					; Reserve 16 KiB for the stack
 stack_top:
-	
+
+section .kpt nobits alloc write		; Kernel Page Table
+	align 16
+	resd 2
+							; Entry Count
+							; First Entry PTR
+
 section .text
 global _start:function (_start.end - _start)
 _start:

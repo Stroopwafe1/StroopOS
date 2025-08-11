@@ -1,56 +1,57 @@
-BUILDDIR=build
+BUILDDIR := build
+PROJECTDIRS := src
 
-OBJS = \
-$(BUILDDIR)/kernel.o \
-$(BUILDDIR)/str.o \
-$(BUILDDIR)/boot.o \
-$(BUILDDIR)/graphics.o \
-$(BUILDDIR)/tty.o \
-$(BUILDDIR)/idt.o \
-$(BUILDDIR)/isrs.o \
-$(BUILDDIR)/irq.o \
-$(BUILDDIR)/timer.o \
-$(BUILDDIR)/keyboard.o \
-$(BUILDDIR)/psf_render.o \
-$(BUILDDIR)/game_pong.o \
-$(BUILDDIR)/Lat2-Terminus16.o
+SRCFILES := $(shell find $(PROJECTDIRS) -type f -name "*.c" -o -name "boot.asm")
+HEADERFILES := $(shell find $(PROJECTDIRS) -type f -name "\*.h")
+OBJFILES := $(addprefix $(BUILDDIR)/, $(addsuffix .o, $(notdir $(SRCFILES))) Lat2-Terminus16.psfu.o)
 
-CFLAGS = -c -std=gnu99 -ffreestanding -ggdb -Wall -Wextra
+VPATH := $(dir $(SRCFILES))
 
-QEMU_OPTIONS = -m 128 -usb -smp 1 -serial stdio -d cpu_reset,guest_errors,pcall
+INCLUDES := $(addprefix -I, $(dir $(SRCFILES)))
+
+CFLAGS := -c -std=gnu99 -ffreestanding -ggdb -Wall -Wextra $(INCLUDES)
+QEMU_OPTIONS := -m 128 -usb -smp 1 -serial stdio -d cpu_reset,guest_errors,pcall
+
+CC := i686-elf-gcc
+AS := nasm
+
+ASFLAGS := $(INCLUDES) -g -felf32
 
 .PHONY: all test test_iso debug clean
 
-all: $(OBJS) build/ build/StroopOS.bin StroopOS.iso test_iso
+all: $(BUILDDIR) $(BUILDDIR)/StroopOS.bin StroopOS.iso test_iso
+
+$(BUILDDIR):
+	mkdir -p $(BUILDDIR)
 
 clean: $(BUILDDIR)
 	rm -rf $(BUILDDIR)/*
 
-debug: build/iso/StroopOS.iso build/StroopOS.bin
-	qemu-system-i386 -cdrom build/iso/StroopOS.iso -s -S $(QEMU_OPTIONS) &
-	gdb -ex 'target remote localhost:1234' build/StroopOS.bin
+debug: $(BUILDDIR)/iso/StroopOS.iso $(BUILDDIR)/StroopOS.bin
+	qemu-system-i386 -cdrom $(BUILDDIR)/iso/StroopOS.iso -s -S $(QEMU_OPTIONS) &
+	gdb -ex 'target remote localhost:1234' $(BUILDDIR)/StroopOS.bin
 
-test: build/StroopOS.bin
-	qemu-system-i386 -kernel build/StroopOS.bin
+test: $(BUILDDIR)/StroopOS.bin
+	qemu-system-i386 -kernel $(BUILDDIR)/StroopOS.bin
 
-test_iso: build/iso/StroopOS.iso
-	qemu-system-i386 -cdrom build/iso/StroopOS.iso $(QEMU_OPTIONS)
+test_iso: $(BUILDDIR)/iso/StroopOS.iso
+	qemu-system-i386 -cdrom $(BUILDDIR)/iso/StroopOS.iso $(QEMU_OPTIONS)
 
-build/StroopOS.bin: $(OBJS) src/linker.ld
-	i686-elf-gcc -T src/linker.ld -o build/StroopOS.bin -ffreestanding -ggdb -nostdlib $(OBJS) -lgcc
+$(BUILDDIR)/StroopOS.bin: $(OBJFILES) src/linker.ld
+	$(CC) -T src/linker.ld -o $(BUILDDIR)/StroopOS.bin -ffreestanding -ggdb -nostdlib $(OBJFILES) -lgcc
 
-build/boot.o: src/*.asm
-	nasm -isrc/ -g -felf32 src/boot.asm -o build/boot.o
+$(BUILDDIR)/Lat2-Terminus16.psfu.o: Lat2-Terminus16.psfu
+	objcopy -O elf32-i386 -B i386 -I binary Lat2-Terminus16.psfu $(BUILDDIR)/Lat2-Terminus16.psfu.o
 
-build/Lat2-Terminus16.o: Lat2-Terminus16.psfu
-	objcopy -O elf32-i386 -B i386 -I binary Lat2-Terminus16.psfu build/Lat2-Terminus16.o
+$(BUILDDIR)/%.c.o: %.c
+	$(CC) $(CFLAGS) $< -o $@
 
-build/%.o: src/%.c src/*.h
-	i686-elf-gcc $(CFLAGS) $< -o $@ 
+$(BUILDDIR)/%.asm.o: %.asm
+	$(AS) $< $(ASFLAGS) -o $@
 
-StroopOS.iso: src/grub.cfg build/StroopOS.bin
-	mkdir -p build/iso/boot/grub
-	cp build/StroopOS.bin build/iso/boot/StroopOS.bin
-	cp src/grub.cfg build/iso/boot/grub/grub.cfg
-	grub-mkrescue -d $(GRUB2_CROSS_PC) -o StroopOS.iso build/iso
-	mv StroopOS.iso build/iso/StroopOS.iso
+StroopOS.iso: src/grub.cfg $(BUILDDIR)/StroopOS.bin
+	mkdir -p $(BUILDDIR)/iso/boot/grub
+	cp $(BUILDDIR)/StroopOS.bin $(BUILDDIR)/iso/boot/StroopOS.bin
+	cp src/grub.cfg $(BUILDDIR)/iso/boot/grub/grub.cfg
+	grub-mkrescue -d $(GRUB2_CROSS_PC) -o StroopOS.iso $(BUILDDIR)/iso
+	mv StroopOS.iso $(BUILDDIR)/iso/StroopOS.iso

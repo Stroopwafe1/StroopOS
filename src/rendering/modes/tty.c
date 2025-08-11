@@ -1,8 +1,5 @@
 #include "tty.h"
 
-#define FONT_H_DEFINITION
-#include "font.h"
-
 #define KEY_MAPPING
 #include "locale-qwerty-us.h"
 #include "str.h"

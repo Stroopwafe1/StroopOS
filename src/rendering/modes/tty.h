@@ -6,7 +6,6 @@
 
 #include "psf_render.h"
 #include "structs.h"
-#include "font.h"
 #include "keyboard.h"
 
 extern uint32_t term_x;
