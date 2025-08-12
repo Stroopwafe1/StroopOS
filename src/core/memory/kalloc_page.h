@@ -3,10 +3,6 @@
 
 #include "structs.h"
 
-extern uint32_t* kpt_entry_count;
-extern uint32_t* kpt_entry_ptr;
-extern PageDescriptorEntry* kpt_entries;
-
 extern MB_MMap* mb_mmap;
 extern MB_MMapEntry* mb_mmap_ram;
 

@@ -25,12 +25,14 @@
 
 mb_info* multiboot_info;
 mb_framebuffer* mb_fb;
-MB_MMap* mb_mmap;
+MB_MMap mb_mmap;
 MB_MMapEntry* mb_mmap_ram;
 
 #define MB_INFO_MMAP_TYPE 6
 #define MB_INFO_MMAP_RAM_TYPE 1
 #define MB_INFO_FB_TYPE 8
+
+extern void _unmap_identity(void);
 
 uint32_t nearest_multiple(uint32_t to_round, uint32_t multiple) {
   return to_round + (multiple - (to_round % multiple)) % multiple;
@@ -43,11 +45,11 @@ void parse_multiboot_info() {
 	if (*tag_start == MB_INFO_FB_TYPE) {
 	  mb_fb = (mb_framebuffer*)tag_start;
 	} else if (*tag_start == MB_INFO_MMAP_TYPE) {
-	  mb_mmap = (MB_MMap*)tag_start;
-	  mb_mmap->entries = (MB_MMapEntry*)&mb_mmap->entries;
-	  for (uint32_t i = 0; i < mb_mmap->size / mb_mmap->entry_size; i++) {
-		if (mb_mmap->entries[i].type == MB_INFO_MMAP_RAM_TYPE) {
-		  mb_mmap_ram = &mb_mmap->entries[i];
+	  mb_mmap = *(MB_MMap*)tag_start;
+	  mb_mmap.entries = (MB_MMapEntry*)&mb_mmap.entries;
+	  for (uint32_t i = 0; i < mb_mmap.size / mb_mmap.entry_size; i++) {
+		if (mb_mmap.entries[i].type == MB_INFO_MMAP_RAM_TYPE) {
+		  mb_mmap_ram = &mb_mmap.entries[i];
 		}
 	  }
 	}
@@ -93,6 +95,7 @@ uint32_t update_freqs[KSTATE_COUNT] = { 0 };
 
 void kernel_main(void) {
   parse_multiboot_info();
+  _unmap_identity();
 
   idt_install();
   isrs_install();

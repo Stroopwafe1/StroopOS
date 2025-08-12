@@ -10,7 +10,7 @@ VPATH := $(dir $(SRCFILES))
 INCLUDES := $(addprefix -I, $(dir $(SRCFILES)))
 
 CFLAGS := -c -std=gnu99 -ffreestanding -ggdb -Wall -Wextra $(INCLUDES)
-QEMU_OPTIONS := -m 128 -usb -smp 1 -serial stdio -d cpu_reset,guest_errors,pcall
+QEMU_OPTIONS := -m 128 -usb -smp 1 -serial stdio -d cpu_reset,guest_errors,pcall -no-reboot -no-shutdown
 
 CC := i686-elf-gcc
 AS := nasm
