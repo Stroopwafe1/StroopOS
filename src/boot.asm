@@ -74,7 +74,11 @@ mmu_page_directory:
 	resb MMU_PAGE_SIZE
 mmu_page_table1:
 	resb MMU_PAGE_SIZE
-
+global _mmu_fb_page_table
+_mmu_fb_page_table:
+mmu_page_table2:				; table2 reserved for framebuffer
+	resb MMU_PAGE_SIZE
+	
 extern _kernel_start
 extern _kernel_end
 
