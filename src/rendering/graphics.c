@@ -2,8 +2,6 @@
 #include "psf_render.h"
 #include "str.h"
 
-extern term_char screen[768][1024];
-
 void DrawPixel(uint32_t x, uint32_t y, uint32_t colour) {
   uint32_t* fb_addr = (uint32_t*)(mb_fb->address);
   
@@ -17,7 +15,6 @@ void DrawChar(char c, uint32_t x, uint32_t y, uint32_t colour) {
 
 void DrawString(const char* str, uint32_t* x, uint32_t* y, ARGB colour, bool new_line) {
     while (*str) {
-	  screen[*y][*x] = (term_char) { .colour = colour, .c = *str };
 	  putchar(*str++, x, y, colour, COLOUR_BLACK);
     }
 	if (new_line)

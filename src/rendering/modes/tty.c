@@ -10,8 +10,6 @@ uint32_t term_x = 0;
 uint32_t term_y = 0;
 bool caret_shown = true;
 
-term_char screen[768][1024] = {0};
-
 void Update_TTY(void) {
   	caret_shown = !caret_shown;
 	ARGB colour = caret_shown ? COLOUR_WHITE : COLOUR_BLACK;
@@ -62,15 +60,6 @@ void Clear_TTY() {
 
 void Redraw() {
   Clear_TTY();
-  for (uint32_t y = 0; y < mb_fb->height; y++) {
-	for (uint32_t x = 0; x < mb_fb->width; x++) {
-	  uint32_t cy = y;
-	  uint32_t cx = x;
-	  term_char entry = screen[y][x];
-	  if (entry.c == 0) continue;
-	  putchar(entry.c, &cx, &cy, entry.colour, COLOUR_BLACK);
-	}
-  }
 }
 
 void PrintUsage() {
@@ -124,9 +113,6 @@ void HandleKey_TTY(Key_Packet key, Reg_State* r) {
 	ProcessBuffer();
 	return;
   } else if (key.scancode == KEY_KP_3) { 
-	for (uint32_t i = 0; i < mb_fb->height - 1; i++) {
-	  MemCopy((void*)&screen[i], (void*)&screen[i + 1], mb_fb->width);
-	}
 	Redraw();
 	return;
   } else if (key.scancode == KEY_BACKSPACE) {
@@ -146,7 +132,6 @@ void HandleKey_TTY(Key_Packet key, Reg_State* r) {
 
   if (mapping) {
 	buffer[buffer_size++] = mapping;
-	screen[term_y][term_x] = (term_char) { .colour = COLOUR_WHITE, .c = mapping };
 	putchar(mapping, &term_x, &term_y, COLOUR_WHITE, COLOUR_BLACK);
   }
 

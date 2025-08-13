@@ -28,14 +28,34 @@ mb_framebuffer* mb_fb;
 MB_MMap mb_mmap;
 MB_MMapEntry* mb_mmap_ram;
 
+#define MMU_PD ((uint32_t*)0xFFFFF000)
+#define MMU_KERNEL 768
 #define MB_INFO_MMAP_TYPE 6
 #define MB_INFO_MMAP_RAM_TYPE 1
 #define MB_INFO_FB_TYPE 8
 
 extern void _unmap_identity(void);
+extern uint32_t _kernel_end;
 
 uint32_t nearest_multiple(uint32_t to_round, uint32_t multiple) {
   return to_round + (multiple - (to_round % multiple)) % multiple;
+}
+
+void mmu_map_framebuffer() {
+  uint32_t pd_index = mb_fb->address >> 22;
+  uint32_t pt_index = mb_fb->address >> 12 & 0x3FF;
+  uint32_t end_point = _kernel_end;
+
+  uint32_t page_count = mb_fb->pitch * mb_fb->height / 4096;
+  uint32_t* new_page_table = (uint32_t*)nearest_multiple(end_point, 4096);
+
+  // Assign the framebuffer index to a new page table
+  MMU_PD[pd_index] = (uint32_t)new_page_table | 0x3;
+  //MemSet(new_page_table, 4096, 0);
+  for (uint32_t i = 0; i < page_count; i++) {
+	uint32_t value = (mb_fb->address + 4096 * i);
+	new_page_table[i + pt_index] = value | 0x3;
+  }
 }
 
 void parse_multiboot_info() {
@@ -95,13 +115,14 @@ uint32_t update_freqs[KSTATE_COUNT] = { 0 };
 
 void kernel_main(void) {
   parse_multiboot_info();
+  mmu_map_framebuffer();
   _unmap_identity();
 
-  idt_install();
-  isrs_install();
-  irq_install();
-  timer_install();
-  keyboard_install();
+  //idt_install();
+  //isrs_install();
+  //irq_install();
+  //timer_install();
+  //keyboard_install();
 
   tty_register();
   pong_register();

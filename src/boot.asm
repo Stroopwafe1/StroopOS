@@ -65,7 +65,7 @@ mb_header_end:
 section .bss
 	align 16
 stack_bottom:
-	resb 16384 					; Reserve 16 KiB for the stack
+	resq 16384 					; Reserve 64 KiB for the stack
 stack_top:
 
 section .mmu_pages nobits alloc write		; Kernel Page Table
@@ -87,7 +87,7 @@ _start:
 	mov ecx, 1024				; Counter, we want 1024 page entries in our page table
 .loop:
 	;; 	cmp esi, _kernel_start	jl .inc_ptr
-	cmp esi, _kernel_end - KERNEL_ADDR_BEGIN
+	cmp esi, (_kernel_end - KERNEL_ADDR_BEGIN) + MMU_PAGE_SIZE
 	jge .loop_end
 
 	;;  Map physical address as present, and writable(!)
@@ -105,6 +105,9 @@ _start:
 	mov dword [mmu_page_directory - KERNEL_ADDR_BEGIN + 0], mmu_page_table1 - KERNEL_ADDR_BEGIN + 0x003
 	mov dword [mmu_page_directory - KERNEL_ADDR_BEGIN + 768 * 4], mmu_page_table1 - KERNEL_ADDR_BEGIN + 0x003
 
+	;; Self-reference page directory so we can write into it later
+	mov dword [mmu_page_directory - KERNEL_ADDR_BEGIN + 1023 * 4], mmu_page_directory - KERNEL_ADDR_BEGIN + 0x03
+	
 	;; Set CR3 to the page directory
 	mov ecx, mmu_page_directory - KERNEL_ADDR_BEGIN
 	mov cr3, ecx
